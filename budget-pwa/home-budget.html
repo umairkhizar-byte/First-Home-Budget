@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home Budget</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --card: #181c27;
+    --card2: #1e2333;
+    --border: #2a3045;
+    --accent: #6c8fff;
+    --accent2: #a78bfa;
+    --green: #34d399;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --text: #e8eaf0;
+    --muted: #7a8099;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #1a1f35 0%, #0f1117 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header h1 { font-family: 'Playfair Display', serif; font-size: 1.6rem; color: var(--text); letter-spacing: -0.5px; }
+  .header h1 span { color: var(--accent); }
+
+  /* MONTH NAV */
+  .month-nav {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card2); border: 1px solid var(--border);
+    border-radius: 40px; padding: 6px 14px;
+  }
+  .month-nav button {
+    background: none; border: none; color: var(--accent); cursor: pointer;
+    font-size: 1.1rem; padding: 2px 6px; border-radius: 50%; transition: background 0.2s;
+  }
+  .month-nav button:hover { background: var(--border); }
+  .month-label { font-size: 0.9rem; font-weight: 600; color: var(--text); min-width: 110px; text-align: center; }
+
+  /* MAIN LAYOUT */
+  .main { max-width: 900px; margin: 0 auto; padding: 24px 16px; display: flex; flex-direction: column; gap: 20px; }
+
+  /* SUMMARY CARDS */
+  .summary-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .sum-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px 20px; text-align: center;
+  }
+  .sum-card .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
+  .sum-card .amount { font-size: 1.5rem; font-weight: 700; font-family: 'Playfair Display', serif; }
+  .sum-card.income .amount { color: var(--green); }
+  .sum-card.expenses .amount { color: var(--red); }
+  .sum-card.balance .amount { color: var(--accent); }
+
+  /* SECTION */
+  .section {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+  }
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    cursor: pointer; user-select: none;
+  }
+  .section-header h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); font-weight: 600; }
+  .section-header .section-total { font-size: 1rem; font-weight: 700; }
+  .section-header .chevron { color: var(--muted); font-size: 0.8rem; transition: transform 0.3s; }
+  .section-header.collapsed .chevron { transform: rotate(-90deg); }
+  .section-body { transition: all 0.3s; }
+  .section-body.collapsed { display: none; }
+
+  /* ROWS */
+  .row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px; border-bottom: 1px solid var(--border);
+  }
+  .row:last-child { border-bottom: none; }
+  .row-label {
+    flex: 1; font-size: 0.88rem; color: var(--text);
+  }
+  .row-label input[type="text"] {
+    background: none; border: none; color: var(--text); font-size: 0.88rem;
+    font-family: 'Inter', sans-serif; width: 100%; outline: none;
+  }
+  .row-label input[type="text"]:focus { border-bottom: 1px solid var(--accent); }
+  .amount-input {
+    background: var(--card2); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-size: 0.88rem; font-family: 'Inter', sans-serif;
+    padding: 6px 10px; width: 130px; text-align: right; outline: none; transition: border 0.2s;
+  }
+  .amount-input:focus { border-color: var(--accent); }
+  .row-delete { background: none; border: none; color: var(--border); cursor: pointer; font-size: 1rem; padding: 4px; border-radius: 4px; transition: color 0.2s; }
+  .row-delete:hover { color: var(--red); }
+
+  /* ADD ROW BTN */
+  .add-row-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 20px; color: var(--muted); font-size: 0.82rem;
+    cursor: pointer; border: none; background: none; font-family: 'Inter', sans-serif;
+    width: 100%; transition: color 0.2s;
+  }
+  .add-row-btn:hover { color: var(--accent); }
+
+  /* TABS (spending categories) */
+  .tabs-row { display: flex; gap: 8px; padding: 12px 20px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+  .tab-btn {
+    background: var(--card2); border: 1px solid var(--border); border-radius: 20px;
+    color: var(--muted); font-size: 0.78rem; padding: 5px 14px; cursor: pointer;
+    transition: all 0.2s; font-family: 'Inter', sans-serif; font-weight: 500;
+  }
+  .tab-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tab-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+
+  /* BALANCE BOX */
+  .balance-box {
+    background: linear-gradient(135deg, #1e2a4a, #1a1f35);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius); padding: 22px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .balance-box .bal-info h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent2); margin-bottom: 4px; }
+  .balance-box .bal-info p { font-size: 0.82rem; color: var(--muted); }
+  .balance-box .bal-amount { font-family: 'Playfair Display', serif; font-size: 2.2rem; font-weight: 700; color: var(--accent); text-align: right; }
+  .balance-box .bal-amount.negative { color: var(--red); }
+
+  /* NOTES */
+  .notes-area {
+    background: var(--card2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 14px; font-size: 0.82rem; color: var(--muted);
+    font-family: 'Inter', sans-serif; width: 100%; resize: vertical; min-height: 60px;
+    outline: none; margin: 12px 20px; width: calc(100% - 40px);
+  }
+  .notes-area:focus { border-color: var(--accent); color: var(--text); }
+
+  /* CHART */
+  .chart-section { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .chart-section h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); font-weight: 600; margin-bottom: 16px; }
+  .chart-bars { display: flex; flex-direction: column; gap: 8px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; }
+  .bar-label { font-size: 0.75rem; color: var(--muted); width: 130px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-track { flex: 1; background: var(--card2); border-radius: 4px; height: 10px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+  .bar-val { font-size: 0.72rem; color: var(--muted); width: 80px; text-align: right; }
+
+  /* FOOTER */
+  .footer { text-align: center; padding: 20px; color: var(--muted); font-size: 0.72rem; }
+
+  /* RESPONSIVE */
+  @media(max-width:600px) {
+    .summary-row { grid-template-columns: 1fr; }
+    .balance-box { flex-direction: column; }
+    .balance-box .bal-amount { font-size: 1.8rem; text-align: left; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Home <span>Budget</span></h1>
+  <div class="month-nav">
+    <button onclick="changeMonth(-1)">&#8592;</button>
+    <div class="month-label" id="monthLabel"></div>
+    <button onclick="changeMonth(1)">&#8594;</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- SUMMARY -->
+  <div class="summary-row">
+    <div class="sum-card income">
+      <div class="label">Total Income</div>
+      <div class="amount" id="totalIncome">0</div>
+    </div>
+    <div class="sum-card expenses">
+      <div class="label">Total Expenses</div>
+      <div class="amount" id="totalExpenses">0</div>
+    </div>
+    <div class="sum-card balance">
+      <div class="label">Balance</div>
+      <div class="amount" id="totalBalance">0</div>
+    </div>
+  </div>
+
+  <!-- INCOME SECTION -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection('income')">
+      <h2>💰 Income</h2>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="section-total" style="color:var(--green)" id="incomeTotal">0</span>
+        <span class="chevron" id="incomeChevron">▼</span>
+      </div>
+    </div>
+    <div class="section-body" id="incomeBody">
+      <div id="incomeRows"></div>
+      <button class="add-row-btn" onclick="addRow('income')">＋ Add income source</button>
+    </div>
+  </div>
+
+  <!-- FIXED EXPENSES SECTION -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection('fixed')">
+      <h2>🏠 Fixed Expenses</h2>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="section-total" style="color:var(--red)" id="fixedTotal">0</span>
+        <span class="chevron" id="fixedChevron">▼</span>
+      </div>
+    </div>
+    <div class="section-body" id="fixedBody">
+      <div id="fixedRows"></div>
+      <button class="add-row-btn" onclick="addRow('fixed')">＋ Add fixed expense</button>
+    </div>
+  </div>
+
+  <!-- SPENDING TABS SECTION -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection('spending')">
+      <h2>🛒 Other Spending</h2>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="section-total" style="color:var(--yellow)" id="spendingTotal">0</span>
+        <span class="chevron" id="spendingChevron">▼</span>
+      </div>
+    </div>
+    <div class="section-body" id="spendingBody">
+      <div class="tabs-row" id="spendingTabs"></div>
+      <div id="spendingRows"></div>
+      <button class="add-row-btn" onclick="addRow('spending')">＋ Add item</button>
+      <button class="add-row-btn" onclick="addSpendingTab()">＋ Add new category tab</button>
+      <textarea class="notes-area" placeholder="Notes for this month..." id="monthNotes" oninput="saveNotes()"></textarea>
+    </div>
+  </div>
+
+  <!-- BALANCE TO WIFE -->
+  <div class="balance-box">
+    <div class="bal-info">
+      <h3>💝 Household Balance</h3>
+      <p>Remaining after all expenses — for daily expenses,<br>maid pay, fuel, groceries & household needs</p>
+    </div>
+    <div class="bal-amount" id="householdBalance">0</div>
+  </div>
+
+  <!-- EXPENSE CHART -->
+  <div class="chart-section">
+    <h2>📊 Expense Breakdown</h2>
+    <div class="chart-bars" id="chartBars"></div>
+  </div>
+
+</div>
+
+<div class="footer">Data saved locally in your browser · Home Budget App</div>
+
+<script>
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+let currentDate = new Date();
+let currentMonthKey = '';
+
+const defaultIncome = [
+  { id: 'i1', label: 'Pension', amount: '' },
+  { id: 'i2', label: 'Salary', amount: '' },
+  { id: 'i3', label: 'Other Source 1', amount: '' },
+  { id: 'i4', label: 'Other Source 2', amount: '' },
+  { id: 'i5', label: 'Other Source 3', amount: '' },
+];
+
+const defaultFixed = [
+  { id: 'f1', label: 'Ammie', amount: '' },
+  { id: 'f2', label: "Ahmed's School Fee", amount: '' },
+  { id: 'f3', label: "Mishel's School Fee", amount: '' },
+  { id: 'f4', label: "Araiz's Uni Fee", amount: '' },
+  { id: 'f5', label: 'Electric Bill', amount: '' },
+  { id: 'f6', label: 'Gas Bill', amount: '' },
+  { id: 'f7', label: 'House Rent', amount: '' },
+  { id: 'f8', label: 'Driver Pay', amount: '' },
+  { id: 'f9', label: 'Golf Club', amount: '' },
+  { id: 'f10', label: 'Caddy', amount: '' },
+  { id: 'f11', label: 'Personal Spending', amount: '' },
+  { id: 'f12', label: 'House Loan', amount: '' },
+  { id: 'f13', label: 'Mobile Packages', amount: '' },
+];
+
+const defaultSpendingTabs = ['Household', 'Fuel', 'Groceries', 'Maid Pay', 'Medical', 'Entertainment'];
+
+let data = {};
+
+function monthKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function loadMonth() {
+  currentMonthKey = monthKey(currentDate);
+  document.getElementById('monthLabel').textContent = `${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+  const saved = localStorage.getItem('hb_' + currentMonthKey);
+  if (saved) {
+    data = JSON.parse(saved);
+  } else {
+    data = {
+      income: JSON.parse(JSON.stringify(defaultIncome)),
+      fixed: JSON.parse(JSON.stringify(defaultFixed)),
+      spendingTabs: [...defaultSpendingTabs],
+      activeTab: defaultSpendingTabs[0],
+      spending: {},
+      notes: ''
+    };
+    defaultSpendingTabs.forEach(t => { data.spending[t] = []; });
+  }
+  renderAll();
+}
+
+function saveData() {
+  localStorage.setItem('hb_' + currentMonthKey, JSON.stringify(data));
+}
+
+function saveNotes() {
+  data.notes = document.getElementById('monthNotes').value;
+  saveData();
+}
+
+function changeMonth(dir) {
+  currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + dir, 1);
+  loadMonth();
+}
+
+function fmt(n) {
+  if (!n) return '0';
+  return Number(n).toLocaleString('en-PK', { maximumFractionDigits: 0 });
+}
+
+function sum(arr) {
+  return arr.reduce((a, r) => a + (parseFloat(r.amount) || 0), 0);
+}
+
+function renderAll() {
+  renderIncome();
+  renderFixed();
+  renderSpendingTabs();
+  renderSpending();
+  renderTotals();
+  renderChart();
+  document.getElementById('monthNotes').value = data.notes || '';
+}
+
+// INCOME
+function renderIncome() {
+  const cont = document.getElementById('incomeRows');
+  cont.innerHTML = '';
+  data.income.forEach((r, i) => {
+    cont.appendChild(makeRow('income', r, i));
+  });
+}
+
+// FIXED
+function renderFixed() {
+  const cont = document.getElementById('fixedRows');
+  cont.innerHTML = '';
+  data.fixed.forEach((r, i) => {
+    cont.appendChild(makeRow('fixed', r, i));
+  });
+}
+
+function makeRow(type, r, i) {
+  const div = document.createElement('div');
+  div.className = 'row';
+  div.innerHTML = `
+    <div class="row-label"><input type="text" value="${r.label}" placeholder="Label" onchange="updateLabel('${type}',${i},this.value)"></div>
+    <input class="amount-input" type="number" value="${r.amount}" placeholder="Amount" min="0"
+      oninput="updateAmount('${type}',${i},this.value)">
+    <button class="row-delete" onclick="deleteRow('${type}',${i})">✕</button>
+  `;
+  return div;
+}
+
+function updateLabel(type, i, val) {
+  if (type === 'spending') {
+    const tab = data.activeTab;
+    data.spending[tab][i].label = val;
+  } else {
+    data[type][i].label = val;
+  }
+  saveData(); renderTotals(); renderChart();
+}
+
+function updateAmount(type, i, val) {
+  if (type === 'spending') {
+    const tab = data.activeTab;
+    data.spending[tab][i].amount = val;
+  } else {
+    data[type][i].amount = val;
+  }
+  saveData(); renderTotals(); renderChart();
+}
+
+function deleteRow(type, i) {
+  if (type === 'spending') {
+    data.spending[data.activeTab].splice(i, 1);
+  } else {
+    data[type].splice(i, 1);
+  }
+  saveData(); renderAll();
+}
+
+function addRow(type) {
+  const id = type + Date.now();
+  if (type === 'spending') {
+    if (!data.spending[data.activeTab]) data.spending[data.activeTab] = [];
+    data.spending[data.activeTab].push({ id, label: 'New Item', amount: '' });
+  } else if (type === 'income') {
+    data.income.push({ id, label: 'New Source', amount: '' });
+  } else {
+    data.fixed.push({ id, label: 'New Expense', amount: '' });
+  }
+  saveData(); renderAll();
+}
+
+// SPENDING TABS
+function renderSpendingTabs() {
+  const cont = document.getElementById('spendingTabs');
+  cont.innerHTML = '';
+  data.spendingTabs.forEach(tab => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (tab === data.activeTab ? ' active' : '');
+    btn.textContent = tab;
+    btn.onclick = () => { data.activeTab = tab; saveData(); renderSpendingTabs(); renderSpending(); renderTotals(); };
+    cont.appendChild(btn);
+  });
+}
+
+function addSpendingTab() {
+  const name = prompt('Enter tab name:');
+  if (!name) return;
+  if (!data.spendingTabs.includes(name)) {
+    data.spendingTabs.push(name);
+    data.spending[name] = [];
+    data.activeTab = name;
+    saveData(); renderAll();
+  }
+}
+
+function renderSpending() {
+  const cont = document.getElementById('spendingRows');
+  cont.innerHTML = '';
+  const tab = data.activeTab;
+  if (!data.spending[tab]) data.spending[tab] = [];
+  data.spending[tab].forEach((r, i) => {
+    cont.appendChild(makeRow('spending', r, i));
+  });
+}
+
+// TOTALS
+function renderTotals() {
+  const incomeTotal = sum(data.income);
+  const fixedTotal = sum(data.fixed);
+  let spendingTotal = 0;
+  data.spendingTabs.forEach(t => {
+    if (data.spending[t]) spendingTotal += sum(data.spending[t]);
+  });
+  const totalExp = fixedTotal + spendingTotal;
+  const balance = incomeTotal - totalExp;
+
+  document.getElementById('totalIncome').textContent = fmt(incomeTotal);
+  document.getElementById('totalExpenses').textContent = fmt(totalExp);
+  document.getElementById('totalBalance').textContent = fmt(balance);
+  document.getElementById('incomeTotal').textContent = fmt(incomeTotal);
+  document.getElementById('fixedTotal').textContent = fmt(fixedTotal);
+  document.getElementById('spendingTotal').textContent = fmt(spendingTotal);
+
+  const hb = document.getElementById('householdBalance');
+  hb.textContent = fmt(balance);
+  hb.className = 'bal-amount' + (balance < 0 ? ' negative' : '');
+}
+
+// CHART
+function renderChart() {
+  const cont = document.getElementById('chartBars');
+  cont.innerHTML = '';
+  const allRows = [...data.fixed];
+  data.spendingTabs.forEach(t => { if(data.spending[t]) allRows.push(...data.spending[t]); });
+  const filtered = allRows.filter(r => parseFloat(r.amount) > 0).sort((a,b) => b.amount - a.amount).slice(0, 12);
+  const max = Math.max(...filtered.map(r => parseFloat(r.amount)||0), 1);
+  const colors = ['#6c8fff','#a78bfa','#34d399','#fbbf24','#f87171','#60a5fa','#fb923c','#c084fc','#4ade80','#f472b6','#38bdf8','#a3e635'];
+  filtered.forEach((r, i) => {
+    const pct = Math.max(4, ((parseFloat(r.amount)||0) / max) * 100);
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `
+      <div class="bar-label">${r.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${colors[i%colors.length]}"></div></div>
+      <div class="bar-val">${fmt(r.amount)}</div>
+    `;
+    cont.appendChild(row);
+  });
+  if (!filtered.length) {
+    cont.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;text-align:center;padding:20px">Enter expense amounts to see breakdown</div>';
+  }
+}
+
+// TOGGLE SECTIONS
+function toggleSection(id) {
+  const body = document.getElementById(id + 'Body');
+  const chevron = document.getElementById(id + 'Chevron');
+  const header = body.previousElementSibling;
+  body.classList.toggle('collapsed');
+  header.classList.toggle('collapsed');
+}
+
+// INIT
+loadMonth();
+</script>
+</body>
+</html>
