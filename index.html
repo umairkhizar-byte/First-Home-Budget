@@ -51,13 +51,15 @@
   .amount-input:focus{border-color:var(--accent);}
   .row-delete{background:none;border:none;color:var(--border);cursor:pointer;font-size:.85rem;padding:5px;border-radius:4px;}
   .row-delete:active{color:var(--red);}
-  .date-input{background:var(--card2);border:1px solid var(--border);border-radius:7px;color:var(--muted);font-size:.68rem;font-family:'Inter',sans-serif;padding:5px 5px;width:88px;outline:none;cursor:pointer;}
-  .date-input:focus{border-color:var(--accent);color:var(--text);}
-  .spending-row{flex-wrap:wrap;gap:5px;}
-  .spending-row .row-label{flex-basis:100%;order:1;}
-  .spending-row .date-input{order:2;}
-  .spending-row .amount-input{order:3;width:90px;}
-  .spending-row .row-delete{order:4;}
+  .date-input{background:var(--card2);border:1px solid var(--accent2);border-radius:7px;color:var(--text);font-size:.7rem;font-family:'Inter',sans-serif;padding:4px 6px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;}
+  .date-input::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.6;cursor:pointer;}
+  .spending-row{flex-direction:column;align-items:stretch;gap:4px;padding:8px 12px;}
+  .spending-row .top-line{display:flex;align-items:center;gap:6px;}
+  .spending-row .top-line .row-label{flex:1;}
+  .spending-row .bottom-line{display:flex;align-items:center;gap:6px;}
+  .spending-row .bottom-line .date-input{flex:1;}
+  .spending-row .bottom-line .amount-input{width:100px;}
+  .spending-row .bottom-line .row-delete{flex-shrink:0;}
   .add-row-btn{display:flex;align-items:center;gap:8px;padding:10px 14px;color:var(--muted);font-size:.8rem;cursor:pointer;border:none;background:none;font-family:'Inter',sans-serif;width:100%;}
   .add-row-btn:active{color:var(--accent);}
   .tabs-row{display:flex;gap:6px;padding:10px 14px;overflow-x:auto;border-bottom:1px solid var(--border);scrollbar-width:none;}
@@ -193,10 +195,13 @@ function makeRow(type,r,i){
     d.className='row spending-row';
     const today=new Date().toISOString().split('T')[0];
     const dateVal=r.date||today;
-    d.innerHTML='<div class="row-label"><input type="text" value="'+r.label+'" placeholder="Description" onchange="updateLabel(\''+type+'\','+i+',this.value)"></div>'
+    d.innerHTML=''
+      +'<div class="top-line"><div class="row-label"><input type="text" value="'+r.label+'" placeholder="Description" onchange="updateLabel(\''+type+'\','+i+',this.value)"></div></div>'
+      +'<div class="bottom-line">'
       +'<input class="date-input" type="date" value="'+dateVal+'" onchange="updateDate('+i+',this.value)">'
       +'<input class="amount-input" type="number" inputmode="numeric" value="'+r.amount+'" placeholder="0" oninput="updateAmount(\''+type+'\','+i+',this.value)">'
-      +'<button class="row-delete" onclick="deleteRow(\''+type+'\','+i+')">✕</button>';
+      +'<button class="row-delete" onclick="deleteRow(\''+type+'\','+i+')">✕</button>'
+      +'</div>';
   } else {
     d.className='row';
     d.innerHTML='<div class="row-label"><input type="text" value="'+r.label+'" placeholder="Label" onchange="updateLabel(\''+type+'\','+i+',this.value)"></div><input class="amount-input" type="number" inputmode="numeric" value="'+r.amount+'" placeholder="0" oninput="updateAmount(\''+type+'\','+i+',this.value)"><button class="row-delete" onclick="deleteRow(\''+type+'\','+i+')">✕</button>';
