@@ -1,4 +1,4 @@
-const CACHE = 'home-budget-v4';
+const CACHE = 'home-budget-v6';
 const FILES = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
